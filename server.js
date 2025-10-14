@@ -1,4 +1,3 @@
-// backend/server.js
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -14,51 +13,55 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Connect to DB before starting the server
+// Connect to DB
 connectDB();
 
-// ✅ Define allowed origins
+// Allowed origins
 const allowedOrigins = [
-  "http://localhost:5173", // local dev
-  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // deployed frontend
+  "http://localhost:5173",
+  "https://frontend-pi-nine-ohpz8qglqg.vercel.app",
 ];
 
-// ✅ CORS middleware
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed for this origin"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+// Custom CORS middleware to handle credentials + preflight
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    );
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    );
+  }
 
-// ✅ Handle preflight requests globally
-app.options("*", cors());
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // Preflight response
+  }
 
-// ✅ Middleware
+  next();
+});
+
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// ✅ Test route (useful for Render health check)
+// Test route
 app.get("/", (req, res) => {
   res.status(200).json({ success: true, message: "Backend is running fine 😎" });
 });
 
-// ✅ API routes
+// API routes
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/comment", commentRoute);
 app.use("/api/v1/admin", adminRoute);
 
-// ✅ Start server
+// Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
