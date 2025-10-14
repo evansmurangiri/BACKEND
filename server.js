@@ -14,24 +14,43 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Use your actual frontend URLs
+// ✅ Connect to DB before starting the server
+connectDB();
+
+// ✅ Define allowed origins
+const allowedOrigins = [
+  "http://localhost:5173", // local dev
+  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // deployed frontend
+];
+
+// ✅ CORS middleware
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", // for local dev
-      "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // your deployed frontend
-    ],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed for this origin"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.options("*", (req, res) => res.sendStatus(204));
+// ✅ Handle preflight requests globally
+app.options("*", cors());
 
+// ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// ✅ Test route (useful for Render health check)
+app.get("/", (req, res) => {
+  res.status(200).json({ success: true, message: "Backend is running fine 😎" });
+});
 
 // ✅ API routes
 app.use("/api/v1/user", userRoute);
@@ -39,10 +58,7 @@ app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/comment", commentRoute);
 app.use("/api/v1/admin", adminRoute);
 
-// ❌ Removed static file serving for Render (Vercel handles frontend)
-
 // ✅ Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server listening at port ${PORT}`);
-  connectDB();
+  console.log(`✅ Server running on port ${PORT}`);
 });
