@@ -13,23 +13,24 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Connect to MongoDB
+// ✅ Connect MongoDB
 connectDB();
 
-// ✅ Allowed frontend origins
+// ✅ List allowed frontends
 const allowedOrigins = [
-  "http://localhost:5173", // local dev
-  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // deployed frontend
+  "http://localhost:5173",
+  "https://frontend-pi-nine-ohpz8qglqg.vercel.app",
 ];
 
-// ✅ 1. Apply CORS before anything else
+// ✅ Set up CORS
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, origin);
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow mobile/postman etc.
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        return callback(new Error("CORS not allowed for this origin"));
       }
     },
     credentials: true,
@@ -38,7 +39,7 @@ app.use(
   })
 );
 
-// ✅ Handle preflight requests globally
+// ✅ Handle preflight for all routes
 app.options("*", cors());
 
 // ✅ Middleware
@@ -48,10 +49,7 @@ app.use(cookieParser());
 
 // ✅ Health check route
 app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Backend is running fine 😎",
-  });
+  res.status(200).json({ success: true, message: "Backend is running fine 😎" });
 });
 
 // ✅ API Routes
@@ -60,7 +58,7 @@ app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/comment", commentRoute);
 app.use("/api/v1/admin", adminRoute);
 
-// ✅ Start the server
+// ✅ Server listen
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
