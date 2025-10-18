@@ -1,3 +1,5 @@
+// backend/server.js
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -13,46 +15,48 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to DB
+// ✅ Connect to database first
 connectDB();
 
-// ✅ Allowed origins for live + local testing
+// ✅ Allowed frontend origins
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://frontend-pi-nine-ohpz8qglqg.vercel.app",
+  "http://localhost:5173", // local dev
+  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // deployed frontend
 ];
 
-// ✅ Use proper CORS setup
+// ✅ CORS setup (simple, secure, and correct)
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: allowedOrigins,
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Middleware
+// ✅ Handle preflight requests globally
+app.options("*", cors());
+
+// ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Test route
+// ✅ Health check route
 app.get("/", (req, res) => {
-  res.status(200).json({ success: true, message: "Backend is running fine 😎" });
+  res.status(200).json({
+    success: true,
+    message: "Backend is running fine 😎",
+  });
 });
 
-// API routes
+// ✅ API routes
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/comment", commentRoute);
 app.use("/api/v1/admin", adminRoute);
 
-// Start server
+// ✅ Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
