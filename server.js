@@ -1,5 +1,4 @@
 // backend/server.js
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -15,29 +14,46 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Connect to database first
+// ✅ Connect to DB
 connectDB();
 
 // ✅ Allowed frontend origins
 const allowedOrigins = [
-  "http://localhost:5173", // local dev
-  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // deployed frontend
+  "http://localhost:5173",
+  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // your Vercel frontend
 ];
 
-// ✅ CORS setup (simple, secure, and correct)
+// ✅ Force custom CORS middleware FIRST
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    );
+  }
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
+// ✅ Then also use cors() to handle origin arrays cleanly
 app.use(
   cors({
     origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// ✅ Handle preflight requests globally
-app.options("*", cors());
-
-// ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
