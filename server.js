@@ -19,65 +19,52 @@ const PORT = process.env.PORT || 5000;
 // ✅ Connect MongoDB
 connectDB();
 
-// ✅ Allowed origins (frontend URLs)
+// ✅ Allowed frontend URLs
 const allowedOrigins = [
-  "http://localhost:5173", // local dev (Vite)
-  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // production frontend
+  "http://localhost:5173",
+  "https://frontend-pi-nine-ohpz8qglqg.vercel.app",
 ];
 
-// ✅ CORS configuration
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn("❌ Blocked by CORS:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Origin",
-      "X-Requested-With",
-      "Content-Type",
-      "Accept",
-      "Authorization",
-    ],
-  })
-);
+// ✅ CORS setup (dynamic origin reflection)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+  }
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
 
-// ✅ Preflight support for all routes
-app.options("*", cors());
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
 
 // ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// ✅ Health check route
+// ✅ Health check
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "✅ Backend is running perfectly on Render!",
+    message: "✅ Backend is running fine and CORS fixed!",
   });
 });
 
-// ✅ API routes
+// ✅ Routes
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/comment", commentRoute);
 app.use("/api/v1/admin", adminRoute);
-
-// ✅ Global error handler (optional but recommended)
-app.use((err, req, res, next) => {
-  console.error("🔥 Server error:", err.message);
-  if (err.message.includes("CORS")) {
-    return res.status(403).json({ success: false, message: "CORS blocked." });
-  }
-  res.status(500).json({ success: false, message: "Server error." });
-});
 
 // ✅ Start server
 app.listen(PORT, () => {
