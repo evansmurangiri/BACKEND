@@ -1,4 +1,3 @@
-// backend/server.js
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -14,46 +13,35 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Connect to DB
+// ✅ Connect to MongoDB
 connectDB();
 
 // ✅ Allowed frontend origins
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // your Vercel frontend
+  "http://localhost:5173", // local dev
+  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // deployed frontend
 ];
 
-// ✅ Force custom CORS middleware FIRST
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-    );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-    );
-  }
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
-
-// ✅ Then also use cors() to handle origin arrays cleanly
+// ✅ 1. Apply CORS before anything else
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, origin);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
+// ✅ Handle preflight requests globally
+app.options("*", cors());
+
+// ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -66,13 +54,13 @@ app.get("/", (req, res) => {
   });
 });
 
-// ✅ API routes
+// ✅ API Routes
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/comment", commentRoute);
 app.use("/api/v1/admin", adminRoute);
 
-// ✅ Start server
+// ✅ Start the server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
