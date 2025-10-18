@@ -16,34 +16,25 @@ const PORT = process.env.PORT || 5000;
 // Connect to DB
 connectDB();
 
-// Allowed origins
+// ✅ Allowed origins for live + local testing
 const allowedOrigins = [
   "http://localhost:5173",
   "https://frontend-pi-nine-ohpz8qglqg.vercel.app",
 ];
 
-// Custom CORS middleware to handle credentials + preflight
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header(
-      "Access-Control-Allow-Headers",
-      "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-    );
-    res.header(
-      "Access-Control-Allow-Methods",
-      "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-    );
-  }
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200); // Preflight response
-  }
-
-  next();
-});
+// ✅ Use proper CORS setup
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
 // Middleware
 app.use(express.json());
