@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 dotenv.config();
-
 import express from "express";
 import connectDB from "./database/db.js";
 import userRoute from "./routes/user.route.js";
@@ -13,16 +12,15 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Connect to MongoDB
 connectDB();
 
-// ✅ Allowed frontend origins
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://frontend-pi-nine-ohpz8qglqg.vercel.app", // your deployed frontend
+  "https://frontend-pi-nine-ohpz8qglqg.vercel.app",
+  "https://frontend-git-main-evansmurangiris-projects.vercel.app", // ✅ added
+  "https://frontend-evansmurangiris-projects.vercel.app",          // ✅ added (wildcard alternative)
 ];
 
-// ✅ Configure CORS properly
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -38,15 +36,11 @@ app.use(
   })
 );
 
-// ✅ Handle preflight for all routes
 app.options("*", cors());
-
-// ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// ✅ Health check route
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -54,11 +48,9 @@ app.get("/", (req, res) => {
   });
 });
 
-// ✅ API Routes
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/comment", commentRoute);
 app.use("/api/v1/admin", adminRoute);
 
-// ✅ Start server
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
